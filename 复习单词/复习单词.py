@@ -1,6 +1,6 @@
-# 复习单词
-# 先复习新学的40个, 此时限定不重复
-# 然后整体随机复习，可重复出现
+# Qpython 3, Android
+# 复习单词：基本原理 spaced repetition 根据你对单词的熟悉程度调整下次复习时间
+
 
 from androidhelper import Android  # Qpython提供SL4A服务
 droid = Android()
@@ -263,15 +263,16 @@ def screen_width(text):
 if __name__ == '__main__':
     lines = read_file(path)
     
-    ## Spaced Repetition  间隔复习法
+    ## Spaced Repetition  间隔复习法，根据你对单词的熟悉程度调整下次复习时间
     spaced_repe = Spaced_Repetition(lines)
     spaced_repe.repete()
     
-    
-    
     exit(0)
     
-    ## 打乱列表复习 方便重复不认识的
+    
+    ## 下面的功能没有spaced repetition, 每次重新运行遇到的单词都是一样的
+    # 先复习新学的40个, 此时限定不重复
+    # 然后整体随机复习，可重复出现
     latest = lines[-40:]  #上次背的
     latest2 = lines[-80:-40] #上上次背的
 
