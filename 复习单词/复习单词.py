@@ -15,8 +15,8 @@ import os
 os.system('clear')  # 清屏
 
 
-path = r'/sdcard/啊学习资料/复习单词.txt'
-# path = r"D:\桌面\我的SYNC\复习单词test.txt"
+path = r'/sdcard/啊学习资料/复习单词.txt'    # 数据文件位置
+mp3_path = r'/sdcard/qpython/word mp3/'      # mp3存放路径
 
 droid.setMediaVolume(6)  #设置媒体音量
 
@@ -36,6 +36,10 @@ def read_file(path):
 
 # 有时候会出重复的单词，运行这个函数去重
 def read_file(path):
+    # 当音频文件夹不存在时，创建
+    if not os.path.exists(mp3_path):
+        os.makedirs(mp3_path)
+        
     with open(path, 'r', encoding='utf-8') as f:
         lines = f.readlines()
         
@@ -86,7 +90,7 @@ def shuffle2review(li0):
                     xx = input('{}'.format('    已复制'))
             
             elif x in ['H', 'h', 'help']:
-                droid.setClipboard(word)  # 设置剪贴板
+                droid.setClipboard(word)
                 li.insert(-4, word)  #4个单词后再次复习该词
                 li.insert(-14, word)  #14个单词后再次复习该词
                 if n<10:
@@ -159,10 +163,10 @@ class Spaced_Repetition:
                         xx = input('{}'.format(''))
                 
                 elif x in ['H', 'h', 'help']:
-                    droid.setClipboard(word)  # 设置剪贴板
+                    droid.setClipboard(word)
                     
-                    lines.insert(-4, line)  #4个单词后再次复习该词
-                    lines.insert(-14, line)  #14个单词后再次复习该词
+                    lines.insert(-4, line)   # 4个单词后再次复习该词
+                    lines.insert(-14, line)  # 14个单词后再次复习该词
                     
                     new_cycle = self.cycles[0]
                     self.update(word, new_cycle, ctime)
@@ -217,7 +221,7 @@ def speak_it(word):
     if ' ' in word:
         word = word.replace(' ', '+')
     
-    path = '/sdcard/qpython/word mp3/{}.mp3'.format(word)
+    path = os.path.join(mp3_path, '{}.mp3'.format(word))
     
     # 根据链接播放在线媒体 https://www.qpython.org/en/guide_androidhelpers.html#mediaplayerfacade
     url1 = 'http://fanyi.baidu.com/gettts?lan=uk&text={}&spd=3&source=web'.format(word)  #uk英音，en美音
