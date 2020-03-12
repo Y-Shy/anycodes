@@ -1,0 +1,102 @@
+## 0. 用到的工具
+
+1. Adobe Acrobat Pro 2017;
+2. Python 3.6.2;
+3. [AutoBookMark Pro](http://www.greenxf.com/soft/151189.html)。
+
+觉得过程麻烦的可以看淘宝店铺 [**文档处理中心**](https://shop486757964.taobao.com/search.htm?spm=2013.1.0.0.43cf741aY9LLdj&search=y)
+
+## 1. 下载PDF格式的博硕士论文
+
+我倾向于使用网站1，能直接获取符合AutoBookMark Pro格式要求的目录，而且能用Zotero添加参考文献条目。
+
+网站1：[中国知网海外版](http://gb.oversea.cnki.net/kns55/default.aspx)
+: 能下载全文pdf和分章pdf, 但连接速度较慢。
+
+网站2：[CNKI学问](http://xuewen.cnki.net/default1.aspx)
+: 能下载全文pdf，速度较快，不能下载分章pdf，目录不易处理。
+
+## 2. 爬取目录
+
+Python爬虫，程序如下。
+
+```python
+# Python 3.6.2
+import requests
+from bs4 import BeautifulSoup
+
+import os
+import win32api, win32con   #获取桌面位置
+
+def get_desktop():      # D:\桌面
+    key = win32api.RegOpenKey(win32con.HKEY_CURRENT_USER,
+        r'Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders', 0, win32con.KEY_READ)
+    return win32api.RegQueryValueEx(key,'Desktop')[0]
+
+def get_gb(url):       #满足格式的目录内容
+    headers = {
+        "Host":"gb.oversea.cnki.net",
+        "User-Agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:65.0) Gecko/20100101 Firefox/65.0",
+        "Accept":"text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+        "Accept-Language":"zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2",
+        "Accept-Encoding":"gzip, deflate",
+        "DNT":"1",
+        "Connection":"keep-alive",
+        "Upgrade-Insecure-Requests":"1"
+    }
+    
+    print('\n开始访问网页...')
+    response = requests.get(url, headers=headers)  # 发送get请求。使用headers以避免访问受限  
+    soup = BeautifulSoup(response.content, 'html.parser')       #得到 soup对象 ，后面的参数是关于格式的
+    
+    ### 得到目录文字
+    results1 = soup.find_all('a', attrs = {'class':'RollLink'} )        # 目录所在标签
+    catalog = []    #目录
+    for res1 in results1:
+        strx = res1.get_text()    #目录文字(自带缩进)
+        #print(strx.replace('\r\n', ''))
+        catalog.append(strx.replace('\r\n', '').replace('\xa0', ' ') )
+
+    #print(catalog)
+    
+    ### 得到页码
+    results2 = soup.find_all('td', attrs = {'width':'100'} )        # 页码所在标签
+    pages = []    #目录
+    for res2 in results2:
+        page = res2.get_text()    #页码文字("14-43")("起始页-结束页")
+        #print(page)
+        page_list = page.split("-")      #['14', '43']
+        pages.append(page_list[0].replace('\r\n', ''))
+        
+    #print(pages)
+
+    print('已从网页得到目录和页码')
+    return catalog, pages
+
+def save(catalog, pages):
+    desk_path = get_desktop()
+    file_path = os.path.join(desk_path, 'PDF目录.txt')
+    
+    with open(file_path, 'w') as f:     # 写方式打开一个文本; 没有指定'utf-8'，默认为'ANSI'
+        for i in range(len(catalog)):
+            each = catalog[i] + ',' + pages[i] + '\n'
+            f.write(each)
+            
+    print('\n已生成目录文件, 请查看    {}'.format(file_path))
+    print('接下来可通过 “Acrobat-增效工具-BookMarks-Creat From Text Files” 实现自动创建PDF书签。')
+
+    
+if __name__ == '__main__':
+    address = 'http://gb.oversea.cnki.net/kcms/download.aspx?filename=2dSRzKh10StlnNxkXVwUjW1QTVOlGV4cVVjlWcWNHcjRTYtRHdvNEclZlR3sySxc1U5wEcr5mSlVmZ=0TSuh2NOZVS4oVehVndilzURZFVj9iM48mRIZDdppmQyFUeK52a1ZTbthXajJjbDljRpt0dZ5kTPt&dflag=catalog&tablename=CDFD0911&cflag=pdf'
+    address = input('右击粘贴CNKI分章下载目录页的网址>>>')
+    
+    catalog, pages = get_gb(address)
+    save(catalog, pages)
+```
+
+## 3. 在PDF中创建书签
+
+下载的pdf格式论文中是没有书签的，不方便查看。
+
+1. 下载 [AutoBookMark Pro](http://www.greenxf.com/soft/151189.html)，解压到Acrobat的安装路径下的plug_ins文件夹内，得到 .\Acrobat\plug_ins\\AutoBookmark Professional 目录结构，然后打开pdf文件，上面出现 增效工具。
+    ![AutoBookmark](https://img-blog.csdnimg.cn/2019030317443327.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dlaXhpbl80NDIyMDk3Ng==,size_16,color_FFFFFF,t_70)2. 增效工具-Bookmarks-Creat From Text File…，选择第2步中得到的目录文件“D:\桌面\PDF目录.txt”，确定即可自动生成书签，点击可跳转。
