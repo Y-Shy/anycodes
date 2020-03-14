@@ -1,5 +1,6 @@
 # Qpython 3, Android
-# 复习单词：基本原理 spaced repetition 根据你对单词的熟悉程度调整下次复习时间
+# 复习单词：基本原理 spaced repetition 根据你对单词的熟悉程度调整下次复习时间      
+# 可以手动向数据文件添加新词，添加时可只写word，不记录时间
 
 
 from androidhelper import Android  # Qpython提供SL4A服务
@@ -90,7 +91,7 @@ def shuffle2review(li0):
                     xx = input('{}'.format('    已复制'))
             
             elif x in ['H', 'h', 'help']:
-                droid.setClipboard(word)
+                droid.setClipboard(word)  # 设置剪贴板
                 li.insert(-4, word)  #4个单词后再次复习该词
                 li.insert(-14, word)  #14个单词后再次复习该词
                 if n<10:
@@ -108,10 +109,8 @@ def shuffle2review(li0):
     
     
 class Spaced_Repetition:
-    def __init__(self, li):  # 类的初始化, li代表实例化类的时候需要传入的变量
-        self.li = li
-        
-        self.lines = [i.split(', ') for i in self.li]
+    def __init__(self, lines):  # 类的初始化, li代表实例化类的时候需要传入的变量
+        self.lines = lines
         self.cycles = ['2h', '5h', '12h', '24h', '2d', '5d', '12d', '21d', '30d', '2m', '3m', '4m', '6m', '1y', '2y', '3y']
         
         
@@ -121,6 +120,16 @@ class Spaced_Repetition:
         
         # 计算各单词下次应开始复习时间
         for line in self.lines:
+            line = line.split(', ')   # line结构 [word, '2h', time]，后两个元素可能缺失
+            
+            # 如果只有word没有时间间隔或时间, 设定一个过去时间使这次能复习
+            if len(line)<3:
+                line = [line[0], '2h', '2020-01-01 01:01:01']
+                
+            # 如果时间间隔不存在于self.cycles
+            if line[1] not in self.cycles:
+                line[1] = self.cycles[1]
+                
             last_time = datetime.datetime.strptime(line[2], '%Y-%m-%d %H:%M:%S')
             word_cycle = self.cal_seconds(line[1])
             next_time = last_time + datetime.timedelta(seconds=word_cycle)
@@ -163,10 +172,10 @@ class Spaced_Repetition:
                         xx = input('{}'.format(''))
                 
                 elif x in ['H', 'h', 'help']:
-                    droid.setClipboard(word)
+                    droid.setClipboard(word)  # 设置剪贴板
                     
-                    lines.insert(-4, line)   # 4个单词后再次复习该词
-                    lines.insert(-14, line)  # 14个单词后再次复习该词
+                    lines.insert(-4, line)  #4个单词后再次复习该词
+                    lines.insert(-14, line)  #14个单词后再次复习该词
                     
                     new_cycle = self.cycles[0]
                     self.update(word, new_cycle, ctime)
@@ -212,9 +221,12 @@ class Spaced_Repetition:
             return num * 3600 * 24 * 30
         elif 'min' in cycle:
             return num * 60
-        else:   # 'y' in cycle
+        elif 'y' in cycle:   # 'y' in cycle
             return num * 3600 * 24 * 365
-
+        else:
+            print('非法的时间间隔：{}'.format(cycle))
+            exit()
+            
 
 def speak_it(word):
     # 'off+season' 不把空格换成+会bad request
