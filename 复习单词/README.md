@@ -16,7 +16,9 @@
 
 每复习20个单词之后，将在终端显示当前已复习过的单词数和剩余待复习的单词数。
 
-输入数字 0 可随时结束程序。
+输入数字 0 可随时结束程序。如图：
+
+![程序屏幕截图](https://github.com/Y-Shy/anycodes/blob/master/%E5%A4%8D%E4%B9%A0%E5%8D%95%E8%AF%8D/ScreenRecord.mp4.jpg)
 
 
 
