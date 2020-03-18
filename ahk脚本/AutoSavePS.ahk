@@ -8,5 +8,4 @@ count := 0
         if (count>6) {
             Send ^s
             count := 0
-
         }
